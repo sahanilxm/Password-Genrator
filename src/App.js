@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { FaClipboard, FaTheRedYeti } from 'react-icons/fa';
+import { FaClipboard } from 'react-icons/fa';
 import { useForm } from './useForm';
 import { getRandomChar, getSpecialChar } from './utils';
 
