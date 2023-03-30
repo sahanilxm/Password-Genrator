@@ -1,141 +1,142 @@
-import React, { useState } from 'react'
-import "./App.css"
-import { numbers, upperCaseLetters, lowerCaseLetters, specialCharacters } from './Character'
-import { toast, ToastContainer } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css';
-import { COPY_Fail, COPY_SUCCESS } from './message';
+import React, { useState } from 'react';
+import { toast } from 'react-hot-toast';
+import { FaClipboard, FaTheRedYeti } from 'react-icons/fa';
+import { useForm } from './useForm';
+import { getRandomChar, getSpecialChar } from './utils';
 
-const App = () => {
-  const [password, setPassword] = useState("")
-  const [passwordLength, setPasswordLength] = useState(26)
-  const [includeUpperCase, setIncludeUpperCase] = useState(false)
-  const [includeLowerCase, setIncludeLowerCase] = useState(false)
-  const [includeNumbers, setIncludeNumbers] = useState(false)
-  const [includeSymbols, setIncludeSymbols] = useState(false)
-  const handleGeneratePassword = () => {
-    if (!includeUpperCase && !includeLowerCase && !includeNumbers && !includeSymbols) {
-      notify("To generate password you must select atleast one checkbox", true)
-    }
-    else {
-      let characterList = ""
-      if (includeNumbers) {
-        characterList = characterList + numbers
+function App() {
+  const [values, setValues] = useForm({
+    length: 6,
+    capital: true,
+    small: true,
+    number: false,
+    symbol: false,
+  });
+  const [result, setResult] = useState('');
+
+  const fieldsArray = [
+    {
+      field: values.capital,
+      getChar: () => getRandomChar(65, 90),
+    },
+    {
+      field: values.small,
+      getChar: () => getRandomChar(97, 122),
+    },
+    {
+      field: values.number,
+      getChar: () => getRandomChar(48, 57),
+    },
+    {
+      field: values.symbol,
+      getChar: () => getSpecialChar(),
+    },
+  ];
+
+  const handleOnSubmit = (e) => {
+    e.preventDefault();
+    let generatedPassword = '';
+    const checkedFields = fieldsArray.filter(({ field }) => field);
+
+    for (let i = 0; i < values.length; i++) {
+      const index = Math.floor(Math.random() * checkedFields.length);
+      const letter = checkedFields[index]?.getChar();
+
+      if (letter) {
+        generatedPassword += letter;
       }
-      if (includeUpperCase) {
-        characterList = characterList + upperCaseLetters
-      }
-      if (includeLowerCase) {
-        characterList = characterList + lowerCaseLetters
-      }
-      if (includeSymbols) {
-        characterList = characterList + specialCharacters
-      }
-      setPassword(createPassword(characterList))
-      notify("Password is generated successfully", false)
     }
+    if (generatedPassword) {
+      setResult(generatedPassword);
+    } else {
+      toast.error(' Please select at least one option');
+    }
+  };
 
-
-  }
-  const createPassword = (characterList) => {
-    let password = ""
-    const characterListLength = characterList.length
-    for (let i = 0; i < passwordLength; i++) {
-      const characterIndex = Math.round(Math.random() * characterListLength)
-      password = password + characterList.charAt(characterIndex)
+  const handleClipboard = async () => {
+    if (result) {
+      await navigator.clipboard.writeText(result);
+      toast.success('Copied to your clipboard');
+    } else {
+      toast.error('No password to copy');
     }
-    return password
-  }
-  const copyToClipboard = (password) => {
-
-    navigator.clipboard.writeText(password)
-  }
-  const notify = (message, hasError = false) => {
-    if (hasError) {
-      toast.error(message, {
-        position: "top-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-      });
-    }
-    else {
-      toast(message, {
-        position: "top-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-      });
-    }
-
-  }
-  const handleCopyPassword = (e) => {
-    if (password === "") {
-      notify(COPY_Fail, true)
-    }
-    else {
-      copyToClipboard(password)
-      notify(COPY_SUCCESS)
-    }
-
-  }
+  };
 
   return (
-    <div className="App">
+    <section>
       <div className="container">
-        <div className="generator">
-          <h2 className="generator__header">
-           Password Generator
-          </h2>
-          <div className="generator__password">
-            <h3 >{password}</h3>
-            <button className="copy__btn">
-              <i onClick={handleCopyPassword} className="far fa-clipboard"></i>
-            </button>
+        <form id="pg-form" onSubmit={handleOnSubmit}>
+          <div className="result">
+            <input
+              type="text"
+              id="result"
+              placeholder="Min 6 Char"
+              readOnly
+              value={result}
+            />
+            <div className="clipboard" onClick={handleClipboard}>
+              <FaClipboard></FaClipboard>
+            </div>
           </div>
-          <div className="form-group">
-            <label htmlFor="password-strength">Password length</label>
-            <input className="pw" defaultValue={passwordLength} onChange={(e) => setPasswordLength(e.target.value)} type="number" id="password-stregth" name="password-strength" max="26" min="8" />
+          <div>
+            <div className="field">
+              <label htmlFor="length">Length</label>
+              <input
+                type="number"
+                id="length"
+                min={6}
+                max={20}
+                name="length"
+                value={values.length}
+                onChange={setValues}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="capital">Capital</label>
+              <input
+                type="checkbox"
+                id="capital"
+                name="capital"
+                checked={values.capital}
+                onChange={setValues}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="small">Small</label>
+              <input
+                type="checkbox"
+                id="small"
+                name="small"
+                checked={values.small}
+                onChange={setValues}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="number">Number</label>
+              <input
+                type="checkbox"
+                id="number"
+                name="number"
+                checked={values.number}
+                onChange={setValues}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="symbol">Symbol</label>
+              <input
+                type="checkbox"
+                id="symbol"
+                name="symbol"
+                checked={values.symbol}
+                onChange={setValues}
+              />
+            </div>
           </div>
-          <div className="form-group">
-            <label htmlFor="uppercase-letters">Add Uppercase Letters</label>
-            <input checked={includeUpperCase} onChange={(e) => setIncludeUpperCase(e.target.checked)} type="checkbox" id="uppercase-letters" name="uppercase-letters" />
-          </div>
-          <div className="form-group">
-            <label htmlFor="lowercase-letters">Add Lowercase Letters</label>
-            <input checked={includeLowerCase} onChange={(e) => setIncludeLowerCase(e.target.checked)} type="checkbox" id="lowercase-letters" name="lowercase-letters" />
-          </div>
-          <div className="form-group">
-            <label htmlFor="include-numbers">Include Numbers</label>
-            <input checked={includeNumbers} onChange={(e) => setIncludeNumbers(e.target.checked)} type="checkbox" id="include-numbers" name="include-numbers" />
-          </div>
-          <div className="form-group">
-            <label htmlFor="include-symbols">Include Symbols</label>
-            <input checked={includeSymbols} onChange={(e) => setIncludeSymbols(e.target.checked)} type="checkbox" id="include-symbols" name="include-symbols" />
-          </div>
-          <button onClick={handleGeneratePassword} className="generator__btn">
-            Generate Password
-          </button>
-          <ToastContainer
-            position="top-center"
-            autoClose={5000}
-            hideProgressBar={false}
-            newestOnTop={false}
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-          />
-        </div>
+          <button type="submit">Generate Password</button>
+        </form>
       </div>
-    </div>
-  )
+    </section>
+  );
 }
 
-export default App
+export default App;
